@@ -34,13 +34,10 @@ CATEGORY_COLORS = {
 
 # Streamlit UI Configuration
 st.set_page_config(page_title="AI Skin Analysis", layout="wide")
-st.markdown("""
-    <style>
-        [data-testid="stSidebar"], [data-testid="collapsedControl"] {
-            display: none !important;
-        }
-    </style>
-""", unsafe_allow_html=True)
+
+# Sidebar with Title and Description
+st.sidebar.title("🌿 AI Skin Analysis")
+st.sidebar.write("Upload an image to analyze your skin type and detect possible skin conditions.")
 
 # Upload Image
 uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
@@ -79,8 +76,7 @@ if uploaded_file is not None:
                     cv2.fillPoly(category_masks[cls_id], points, color)
                     detected_conditions.add(cls_id)
 
-        skin_problems = [CATEGORY_NAMES[cls_id] for cls_id in detected_conditions if
-                         CATEGORY_NAMES[cls_id] not in ["Normal Skin", "Oily Skin", "Dry Skin"]]
+        skin_problems = [CATEGORY_NAMES[cls_id] for cls_id in detected_conditions if CATEGORY_NAMES[cls_id] not in ["Normal Skin", "Oily Skin", "Dry Skin"]]
 
         col_skin_type, col_skin_problems = st.columns(2)
 
@@ -102,8 +98,7 @@ if uploaded_file is not None:
             st.subheader(f"Segmented Image for {CATEGORY_NAMES[cls_id]}")
             segmented_img = cv2.addWeighted(image, 0.7, category_masks[cls_id], 0.3, 0)
             resized_segmented_img = cv2.resize(segmented_img, (250, 200))
-            st.image(Image.fromarray(resized_segmented_img), caption=f"{CATEGORY_NAMES[cls_id]}",
-                     use_container_width=False)
+            st.image(Image.fromarray(resized_segmented_img), caption=f"{CATEGORY_NAMES[cls_id]}", use_container_width=False)
 
         with col2:
             st.subheader(f"🛙️ Recommended Products for {CATEGORY_NAMES[cls_id]}")
@@ -111,32 +106,25 @@ if uploaded_file is not None:
             products = list(products_ref.stream())
 
             if products:
-                # Pagination logic for showing 3 products at a time
                 product_index = st.session_state.get(f'product_index_{cls_id}', 0)
-                num_products = len(products)
-                num_cols = 3  # Show 3 products in a row
 
-                # Navigation buttons
-                cols_nav = st.columns([1, 3, 1])
-                with cols_nav[0]:
+                cols = st.columns([1, 3, 1])
+                with cols[0]:
                     if st.button("⬅️", key=f'prev_{cls_id}'):
-                        product_index = (product_index - num_cols) % num_products
+                        product_index = (product_index - 1) % len(products)
 
-                with cols_nav[2]:
+                with cols[1]:
+                    product_data = products[product_index].to_dict()
+                    st.markdown(f"**{product_data.get('Product', 'Unnamed Product')}**")
+                    st.write(product_data.get('Description', 'No description available.'))
+                    st.image(product_data.get('Img_URL', ''), width=150)
+                    st.write(f"💰 Price: ₹{product_data.get('Price', 'N/A')}")
+                    st.markdown(f"[🛒 Buy Now]({product_data.get('Prod_URL', '#')})", unsafe_allow_html=True)
+
+                with cols[2]:
                     if st.button("➡️", key=f'next_{cls_id}'):
-                        product_index = (product_index + num_cols) % num_products
+                        product_index = (product_index + 1) % len(products)
 
                 st.session_state[f'product_index_{cls_id}'] = product_index
 
-                # Display products in a row
-                product_columns = st.columns(num_cols)
-                for i in range(num_cols):
-                    product_idx = product_index + i
-                    if product_idx < num_products:
-                        product_data = products[product_idx].to_dict()
-                        with product_columns[i]:
-                            st.markdown(f"**{product_data.get('Product', 'Unnamed Product')}**")
-                            st.image(product_data.get('Img_URL', ''), width=150)
-                            st.write(product_data.get('Description', 'No description available.'))
-                            st.write(f"💰 Price: ₹{product_data.get('Price', 'N/A')}")
-                            st.markdown(f"[🛒 Buy Now]({product_data.get('Prod_URL', '#')})", unsafe_allow_html=True)
+
