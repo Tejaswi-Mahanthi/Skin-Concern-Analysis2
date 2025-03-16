@@ -140,10 +140,3 @@ if uploaded_file is not None:
                             st.write(product_data.get('Description', 'No description available.'))
                             st.write(f"💰 Price: ₹{product_data.get('Price', 'N/A')}")
                             st.markdown(f"[🛒 Buy Now]({product_data.get('Prod_URL', '#')})", unsafe_allow_html=True)
-import base64
-import os
-
-# Convert image to Base64
-def get_base64_image(image_path):
-    with open(image_path, "rb") as image_file:
-        return f"data:image/webp;base64,{base64.b64encode(image_file.read()).decode('utf-8')}"
